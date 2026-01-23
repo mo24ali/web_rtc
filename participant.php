@@ -430,6 +430,7 @@ if(empty($room_id)) {
                 </div>
             `;
             
+            
             // Add second participant
             participantsContainer.innerHTML += `
                 <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-blue-300 transition-colors">

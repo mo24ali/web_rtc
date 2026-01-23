@@ -698,6 +698,8 @@ if(empty($room_id)) {
                 // In real app, you would call your backend to end the session
                 // window.location.href = 'index.php';
             }
+
+
         }
         
         // Initialize your host logic
