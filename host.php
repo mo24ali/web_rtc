@@ -15,6 +15,10 @@ if(empty($room_id)) {
     <title>Host Control Panel | InterviewPro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
@@ -156,6 +160,53 @@ if(empty($room_id)) {
                 </div>
             </div>
         </header>
+
+        <!-- Code Editor Section -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 mb-8">
+            <div class="p-5 bg-gradient-to-r from-purple-600 to-purple-700">
+                <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                    <i class="fas fa-code"></i>
+                    Code Editor
+                    <span class="bg-white/20 text-white text-sm font-medium px-3 py-1 rounded-full">Real-time Collaboration</span>
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="bg-gray-900 rounded-xl overflow-hidden">
+                    <div class="p-4 bg-gray-800 border-b border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                    <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                </div>
+                                <span class="text-gray-300 text-sm font-medium">JavaScript - index.js</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="runCode" class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded">
+                                    <i class="fas fa-play"></i> Run
+                                </button>
+                                <button id="toggleParticipantEditing" class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded">
+                                    <i class="fas fa-edit"></i> Allow Editing
+                                </button>
+                                <button class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded">
+                                    <i class="fas fa-share"></i> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="code-editor" class="w-full h-96 bg-gray-900 text-gray-100 font-mono text-sm p-4 resize-none" placeholder="Start coding...">// Welcome to the collaborative code editor!
+// Your code will be synchronized in real-time with all participants
+
+function helloWorld() {
+    console.log("Hello, World!");
+    return "Welcome to the interview!";
+}
+
+// Try typing some code here...</textarea>
+                </div>
+            </div>
+        </div>
 
         <!-- Main Content Area -->
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
@@ -332,6 +383,34 @@ if(empty($room_id)) {
                             <div class="text-center py-8">
                                 <i class="fas fa-users text-gray-300 text-4xl mb-3"></i>
                                 <p class="text-gray-500 font-medium">No participants connected</p>
+                                <p class="text-gray-400 text-sm mt-2">Participants will appear here when they join</p>
+                            </div>
+                        </div>
+
+                        <!-- Participant Status Summary -->
+                        <div id="participantStats" class="mt-6 p-4 bg-gray-50 rounded-lg hidden">
+                            <h4 class="font-semibold text-gray-800 mb-3">Room Statistics</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-users text-blue-500"></i>
+                                    <span id="totalParticipants">0</span>
+                                    <span class="text-gray-600">Total</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-video text-green-500"></i>
+                                    <span id="videoEnabled">0</span>
+                                    <span class="text-gray-600">Video On</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-microphone text-green-500"></i>
+                                    <span id="audioEnabled">0</span>
+                                    <span class="text-gray-600">Audio On</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-clock text-gray-500"></i>
+                                    <span id="avgConnection">Good</span>
+                                    <span class="text-gray-600">Quality</span>
+                                </div>
                             </div>
                         </div>
                     </div>

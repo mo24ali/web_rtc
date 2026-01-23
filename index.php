@@ -231,7 +231,7 @@
             submitBtn.disabled = true;
             
             try {
-                const response = await fetch('api/create-room.php', {
+                const response = await fetch('api/room-api.php?action=create-room', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({host_name: hostName})
@@ -245,7 +245,7 @@
                     document.getElementById('hostRoomInfo').classList.remove('hidden');
                     
                     // Start countdown
-                    let countdown = 3;
+                    let countdown = 10;
                     const countdownElement = document.getElementById('countdown');
                     const countdownInterval = setInterval(() => {
                         countdown--;
@@ -269,26 +269,45 @@
             }
         });
 
-        document.getElementById('joinForm').addEventListener('submit', function(e) {
+        document.getElementById('joinForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const participantName = document.getElementById('participantName').value;
             const roomCode = document.getElementById('roomCode').value.trim();
-            
+
             if (!participantName || !roomCode) {
                 alert('Please fill in all fields');
                 return;
             }
-            
+
             // Show loading state
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Joining...';
             submitBtn.disabled = true;
-            
-            // Simulate API check (you can add actual validation here)
-            setTimeout(() => {
-                window.location.href = `participant.php?room=${roomCode}&name=${encodeURIComponent(participantName)}`;
-            }, 1000);
+
+            try {
+                const response = await fetch('api/room-api.php?action=join-room', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        room_id: roomCode,
+                        participant_name: participantName
+                    })
+                });
+
+                const data = await response.json();
+                if(data.success) {
+                    window.location.href = `participant.php?room=${roomCode}&name=${encodeURIComponent(participantName)}`;
+                } else {
+                    alert('Failed to join room: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please check your connection and try again.');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         });
 
         function copyLink() {
