@@ -3,6 +3,7 @@ class ParticipantWebRTC {
         this.roomId = roomId;
         this.userName = userName;
         this.peerConnections = {};
+        this.dataChannels = {};
         this.localStream = null;
         this.socket = null;
         this.configuration = {
@@ -11,14 +12,44 @@ class ParticipantWebRTC {
                 { urls: 'stun:global.stun.twilio.com:3478' }
             ]
         };
-        
+
+        this.editor = null;
+        this.isReceiving = false;
+
         this.init();
     }
 
     async init() {
+        this.initEditor();
         await this.initLocalStream();
         this.initSocket();
         this.setupEventListeners();
+    }
+
+    initEditor() {
+        this.editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            mode: 'javascript',
+            theme: 'dracula',
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            matchBrackets: true
+        });
+
+        this.editor.on('change', (cm, change) => {
+            if (!this.isReceiving) {
+                const content = cm.getValue();
+                this.sendCodeUpdate(content);
+            }
+        });
+    }
+
+    sendCodeUpdate(content) {
+        // Send to host
+        Object.values(this.dataChannels).forEach(channel => {
+            if (channel.readyState === 'open') {
+                channel.send(content);
+            }
+        });
     }
 
     async initLocalStream() {
@@ -27,7 +58,7 @@ class ParticipantWebRTC {
                 video: true,
                 audio: true
             });
-            
+
             const localVideo = document.getElementById('localVideo');
             localVideo.srcObject = this.localStream;
         } catch (error) {
@@ -37,7 +68,7 @@ class ParticipantWebRTC {
 
     initSocket() {
         this.socket = new WebSocket('ws://localhost:8080');
-        
+
         this.socket.onopen = () => {
             console.log('Connected to signaling server');
             this.socket.send(JSON.stringify({
@@ -50,8 +81,8 @@ class ParticipantWebRTC {
         this.socket.onmessage = async (event) => {
             const message = JSON.parse(event.data);
             console.log('Message received:', message);
-            
-            switch(message.type) {
+
+            switch (message.type) {
                 case 'offer':
                     await this.handleOffer(message);
                     break;
@@ -75,12 +106,31 @@ class ParticipantWebRTC {
         // Create peer connection for host
         const peerConnection = new RTCPeerConnection(this.configuration);
         this.peerConnections[message.from] = peerConnection;
-        
+
+        // Listen for Data Channel
+        peerConnection.ondatachannel = (event) => {
+            const dataChannel = event.channel;
+            this.dataChannels[message.from] = dataChannel;
+
+            console.log("Data channel received from host");
+
+            dataChannel.onmessage = (event) => {
+                if (this.editor) {
+                    this.isReceiving = true;
+                    // Preserve cursor position roughly (though simple setValue resets it often, CodeMirror handles it better than raw textarea)
+                    const cursor = this.editor.getCursor();
+                    this.editor.setValue(event.data);
+                    this.editor.setCursor(cursor);
+                    this.isReceiving = false;
+                }
+            };
+        };
+
         // Add local stream
         this.localStream.getTracks().forEach(track => {
             peerConnection.addTrack(track, this.localStream);
         });
-        
+
         // Setup ICE candidate
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
@@ -92,7 +142,7 @@ class ParticipantWebRTC {
                 }));
             }
         };
-        
+
         // Setup remote stream (host video)
         peerConnection.ontrack = (event) => {
             const hostVideo = document.getElementById('hostVideo');
@@ -100,12 +150,12 @@ class ParticipantWebRTC {
                 hostVideo.srcObject = event.streams[0];
             }
         };
-        
+
         // Set remote description and create answer
         await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
-        
+
         this.socket.send(JSON.stringify({
             type: 'answer',
             target: message.from,
@@ -169,10 +219,13 @@ class ParticipantWebRTC {
     leaveRoom() {
         // Close all connections
         Object.values(this.peerConnections).forEach(pc => pc.close());
-        
+        Object.values(this.dataChannels).forEach(dc => dc.close());
+
         // Stop local stream
-        this.localStream.getTracks().forEach(track => track.stop());
-        
+        if (this.localStream) {
+            this.localStream.getTracks().forEach(track => track.stop());
+        }
+
         // Notify server
         if (this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify({
@@ -180,7 +233,7 @@ class ParticipantWebRTC {
                 room: this.roomId
             }));
         }
-        
+
         // Redirect to home
         window.location.href = 'index.php';
     }
