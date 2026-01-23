@@ -244,7 +244,7 @@
                     document.getElementById('hostRoomInfo').classList.remove('hidden');
                     
                     // Start countdown
-                    let countdown = 3;
+                    let countdown = 30;
                     const countdownElement = document.getElementById('countdown');
                     const countdownInterval = setInterval(() => {
                         countdown--;
