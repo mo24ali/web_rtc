@@ -608,10 +608,11 @@ function helloWorld() {
                 status.className = 'bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full';
             }
         }
-        
-        // Audio Toggle
         document.getElementById('toggleAudio').addEventListener('click', toggleAudio);
         document.getElementById('toggleAudioBottom').addEventListener('click', toggleAudio);
+        
+
+
         
         function toggleAudio() {
             audioEnabled = !audioEnabled;
