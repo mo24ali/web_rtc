@@ -213,11 +213,9 @@ class HostWebRTC {
                     room: this.roomId
                 }));
                 
-                // Close all connections
                 Object.values(this.peerConnections).forEach(pc => pc.close());
                 this.peerConnections = {};
                 
-                // Redirect to home page
                 window.location.href = 'index.php';
             }
         });

@@ -15,3 +15,5 @@ CREATE TABLE participants (
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES rooms(id)
 );
+
+select * from participants;
