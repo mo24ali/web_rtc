@@ -1,4 +1,6 @@
+-- Active: 1765878045677@@127.0.0.1@3306
 CREATE DATABASE interview_room;
+
 USE interview_room;
 
 CREATE TABLE rooms (
