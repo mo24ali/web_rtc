@@ -7,7 +7,7 @@ CREATE TABLE rooms (
     host_name VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE
-);²
+);
 
 CREATE TABLE participants (
     id INT AUTO_INCREMENT PRIMARY KEY,
