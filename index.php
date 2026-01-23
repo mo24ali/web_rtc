@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InterviewPro | Virtual Interview Platform</title>
+    <title>CodeMeet | Virtual Interview Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -52,7 +52,7 @@
                 <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-2xl flex items-center justify-center shadow-lg">
                     <i class="fas fa-video text-xl"></i>
                 </div>
-                <h1 class="text-4xl font-bold gradient-text">InterviewPro</h1>
+                <h1 class="text-4xl font-bold gradient-text">CodeMeet</h1>
             </div>
             <p class="text-gray-600 text-lg max-w-2xl mx-auto font-normal">
                 Professional virtual interview platform with crystal-clear audio and video. Connect seamlessly with candidates anywhere.
@@ -128,8 +128,7 @@
                             <div class="flex flex-col sm:flex-row gap-3">
                                 <input type="text" id="roomLink" 
                                        class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 bg-white"
-                                       readonly 
-                                       value="https://interviewpro.com/join/INV-8X7A-2B9C">
+                                       readonly>
                                 <button onclick="copyLink()" 
                                         class="flex items-center justify-center gap-2 px-6 py-3 bg-gray-800 text-white rounded-xl hover:bg-gray-900 transition-colors font-semibold whitespace-nowrap">
                                     <i class="fas fa-copy"></i>
@@ -205,7 +204,7 @@
 
         <!-- Footer -->
         <footer class="text-center py-8 border-t border-gray-200 mt-8">
-            <p class="text-gray-500 mb-4">&copy; 2023 InterviewPro. All rights reserved.</p>
+            <p class="text-gray-500 mb-4">&copy; 2026 CodeMeet. All rights reserved.</p>
             <div class="flex flex-wrap justify-center gap-6">
                 <a href="#" class="text-gray-500 hover:text-blue-600 transition-colors font-medium">Privacy Policy</a>
                 <a href="#" class="text-gray-500 hover:text-blue-600 transition-colors font-medium">Terms of Service</a>
@@ -245,7 +244,7 @@
                     document.getElementById('hostRoomInfo').classList.remove('hidden');
                     
                     // Start countdown
-                    let countdown = 3;
+                    let countdown = 30;
                     const countdownElement = document.getElementById('countdown');
                     const countdownInterval = setInterval(() => {
                         countdown--;

@@ -1,11 +1,15 @@
-class ParticipantWebRTC {
+import { FirestoreSignaling } from './signaling-firestore.js';
+
+export class ParticipantWebRTC {
     constructor(roomId, userName) {
         this.roomId = roomId;
         this.userName = userName;
-        this.peerConnections = {};
-        this.dataChannels = {};
+        this.peerConnections = {}; // Keyed by 'host' usually, or other participant IDs if full mesh
+        this.hostId = 'host'; // Identifying the host connection
+
         this.localStream = null;
-        this.socket = null;
+        this.signaling = new FirestoreSignaling(roomId, userName, false);
+
         this.configuration = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -18,11 +22,12 @@ class ParticipantWebRTC {
 
         this.init();
     }
+    // ... rest of class remains valid ...
 
     async init() {
         this.initEditor();
         await this.initLocalStream();
-        this.initSocket();
+        await this.initSignaling();
         this.setupEventListeners();
     }
 
@@ -38,16 +43,17 @@ class ParticipantWebRTC {
         this.editor.on('change', (cm, change) => {
             if (!this.isReceiving) {
                 const content = cm.getValue();
-                this.sendCodeUpdate(content);
+                this.signaling.sendCodeUpdate(content);
             }
         });
-    }
 
-    sendCodeUpdate(content) {
-        // Send to host
-        Object.values(this.dataChannels).forEach(channel => {
-            if (channel.readyState === 'open') {
-                channel.send(content);
+        this.signaling.on('codeUpdate', (content) => {
+            if (this.editor.getValue() !== content) {
+                this.isReceiving = true;
+                const cursor = this.editor.getCursor();
+                this.editor.setValue(content);
+                this.editor.setCursor(cursor);
+                this.isReceiving = false;
             }
         });
     }
@@ -63,135 +69,98 @@ class ParticipantWebRTC {
             localVideo.srcObject = this.localStream;
         } catch (error) {
             console.error('Error accessing media devices:', error);
+            alert('Could not access camera/microphone. Please check permissions.');
         }
     }
 
-    initSocket() {
-        this.socket = new WebSocket('ws://localhost:8080');
+    async initSignaling() {
+        // Event Listeners
+        this.signaling.on('offer', async (offer) => {
+            console.log('Received offer from host');
+            await this.handleOffer(offer);
+        });
 
-        this.socket.onopen = () => {
-            console.log('Connected to signaling server');
-            this.socket.send(JSON.stringify({
-                type: 'participant',
-                room: this.roomId,
-                name: this.userName
-            }));
-        };
+        this.signaling.on('ice-candidate', async (candidate) => {
+            console.log('Received ICE candidate from host');
+            await this.handleICECandidate(candidate);
+        });
 
-        this.socket.onmessage = async (event) => {
-            const message = JSON.parse(event.data);
-            console.log('Message received:', message);
+        this.signaling.on('endInterview', () => {
+            alert('Host has ended the interview.');
+            window.location.href = 'index.php';
+        });
 
-            switch (message.type) {
-                case 'offer':
-                    await this.handleOffer(message);
-                    break;
-                case 'answer':
-                    await this.handleAnswer(message);
-                    break;
-                case 'ice-candidate':
-                    await this.handleICECandidate(message);
-                    break;
-                case 'newParticipant':
-                    await this.handleNewParticipant(message.participantId, message.name);
-                    break;
-                case 'endInterview':
-                    this.handleInterviewEnded();
-                    break;
-            }
-        };
+        // Join Room
+        try {
+            await this.signaling.joinRoom();
+            console.log('Joined room in Firestore');
+        } catch (e) {
+            console.error('Error joining room:', e);
+            alert('Failed to join room. It might not exist or connection failed.');
+            window.location.href = 'index.php';
+        }
     }
 
-    async handleOffer(message) {
-        // Create peer connection for host
+    async handleOffer(offer) {
+        console.log('Handling offer');
         const peerConnection = new RTCPeerConnection(this.configuration);
-        this.peerConnections[message.from] = peerConnection;
+        this.peerConnections[this.hostId] = peerConnection;
 
-        // Listen for Data Channel
-        peerConnection.ondatachannel = (event) => {
-            const dataChannel = event.channel;
-            this.dataChannels[message.from] = dataChannel;
-
-            console.log("Data channel received from host");
-
-            dataChannel.onmessage = (event) => {
-                if (this.editor) {
-                    this.isReceiving = true;
-                    // Preserve cursor position roughly (though simple setValue resets it often, CodeMirror handles it better than raw textarea)
-                    const cursor = this.editor.getCursor();
-                    this.editor.setValue(event.data);
-                    this.editor.setCursor(cursor);
-                    this.isReceiving = false;
-                }
-            };
-        };
-
-        // Add local stream
+        // Add local tracks
         this.localStream.getTracks().forEach(track => {
             peerConnection.addTrack(track, this.localStream);
         });
 
-        // Setup ICE candidate
+        // Handle ICE candidates
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                this.socket.send(JSON.stringify({
-                    type: 'ice-candidate',
-                    target: message.from,
-                    candidate: event.candidate,
-                    room: this.roomId
-                }));
+                // Send to host (targetId is actually not used in method implementation for participant sending to host, 
+                // but we pass something or method logic handles it based on isHost flag)
+                this.signaling.sendIceCandidate('host', event.candidate);
             }
         };
 
-        // Setup remote stream (host video)
+        // Handle remote stream (Host video)
         peerConnection.ontrack = (event) => {
+            console.log('Received host track');
             const hostVideo = document.getElementById('hostVideo');
-            if (hostVideo && !hostVideo.srcObject) {
+            if (hostVideo) {
                 hostVideo.srcObject = event.streams[0];
+
+                // Hide waiting state
+                const hostWaiting = document.getElementById('hostWaiting');
+                if (hostWaiting) hostWaiting.style.display = 'none';
+
+                // Update Host Info UI
+                const container = hostVideo.closest('.bg-white'); // parent card
+                if (container) {
+                    const statusText = container.querySelector('.text-blue-100');
+                    if (statusText) statusText.textContent = 'Connected';
+                }
             }
         };
 
-        // Set remote description and create answer
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
+        try {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
 
-        this.socket.send(JSON.stringify({
-            type: 'answer',
-            target: message.from,
-            answer: answer,
-            room: this.roomId
-        }));
-    }
-
-    async handleAnswer(message) {
-        const peerConnection = this.peerConnections[message.from];
-        if (peerConnection) {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer));
+            console.log('Sending answer');
+            await this.signaling.sendAnswer(answer);
+        } catch (e) {
+            console.error('Error handling offer:', e);
         }
     }
 
-    async handleICECandidate(message) {
-        const peerConnection = this.peerConnections[message.from];
-        if (peerConnection && message.candidate) {
+    async handleICECandidate(candidate) {
+        const peerConnection = this.peerConnections[this.hostId];
+        if (peerConnection) {
             try {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
-            } catch (error) {
-                console.error('Error adding ICE candidate:', error);
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (e) {
+                console.error('Error adding ICE candidate:', e);
             }
         }
-    }
-
-    async handleNewParticipant(participantId, name) {
-        // This handles connections to other participants (optional)
-        if (participantId !== this.socket.id) {
-            // Similar to host logic for peer-to-peer between participants
-        }
-    }
-
-    handleInterviewEnded() {
-        alert('The host has ended the interview.');
-        this.leaveRoom();
     }
 
     setupEventListeners() {
@@ -209,36 +178,16 @@ class ParticipantWebRTC {
             }
         });
 
-        document.getElementById('leaveRoom').addEventListener('click', () => {
+        document.getElementById('leaveRoom').addEventListener('click', async () => {
             if (confirm('Leave the interview room?')) {
-                this.leaveRoom();
+                await this.signaling.leaveRoom();
+                window.location.href = 'index.php';
             }
         });
-    }
 
-    leaveRoom() {
-        // Close all connections
-        Object.values(this.peerConnections).forEach(pc => pc.close());
-        Object.values(this.dataChannels).forEach(dc => dc.close());
-
-        // Stop local stream
-        if (this.localStream) {
-            this.localStream.getTracks().forEach(track => track.stop());
-        }
-
-        // Notify server
-        if (this.socket.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify({
-                type: 'leave',
-                room: this.roomId
-            }));
-        }
-
-        // Redirect to home
-        window.location.href = 'index.php';
+        window.addEventListener('beforeunload', () => {
+            this.signaling.leaveRoom();
+        });
     }
 }
 
-function initializeParticipant(roomId, userName) {
-    window.participantRTC = new ParticipantWebRTC(roomId, userName);
-}
