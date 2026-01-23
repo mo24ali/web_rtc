@@ -3,6 +3,7 @@ class HostWebRTC {
         this.roomId = roomId;
         this.userName = userName;
         this.peerConnections = {};
+        this.dataChannels = {};
         this.localStream = null;
         this.socket = null;
         this.configuration = {
@@ -12,13 +13,42 @@ class HostWebRTC {
             ]
         };
         
+        this.editor = null;
+        this.isReceiving = false;
+        
         this.init();
     }
 
     async init() {
+        this.initEditor();
         await this.initLocalStream();
         this.initSocket();
         this.setupEventListeners();
+    }
+
+    initEditor() {
+        this.editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            mode: 'javascript',
+            theme: 'dracula',
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            matchBrackets: true
+        });
+
+        this.editor.on('change', (cm, change) => {
+            if (!this.isReceiving) {
+                const content = cm.getValue();
+                this.broadcastCode(content);
+            }
+        });
+    }
+
+    broadcastCode(content) {
+        Object.values(this.dataChannels).forEach(channel => {
+            if (channel.readyState === 'open') {
+                channel.send(content);
+            }
+        });
     }
 
     async initLocalStream() {
@@ -76,6 +106,35 @@ class HostWebRTC {
         // Create peer connection
         const peerConnection = new RTCPeerConnection(this.configuration);
         this.peerConnections[participantId] = peerConnection;
+        
+        // Create Data Channel
+        const dataChannel = peerConnection.createDataChannel("code-editor");
+        this.dataChannels[participantId] = dataChannel;
+        
+        dataChannel.onopen = () => {
+            console.log(`Data channel open with ${name}`);
+            // Send current code to new participant
+            if (this.editor) {
+                dataChannel.send(this.editor.getValue());
+            }
+        };
+
+        dataChannel.onmessage = (event) => {
+            if (this.editor) {
+                this.isReceiving = true;
+                const cursor = this.editor.getCursor();
+                this.editor.setValue(event.data);
+                this.editor.setCursor(cursor);
+                this.isReceiving = false;
+                
+                // Re-broadcast to other participants (except sender)
+                Object.entries(this.dataChannels).forEach(([id, channel]) => {
+                    if (id !== participantId && channel.readyState === 'open') {
+                        channel.send(event.data);
+                    }
+                });
+            }
+        };
         
         // Add local stream to connection
         this.localStream.getTracks().forEach(track => {
@@ -165,6 +224,11 @@ class HostWebRTC {
         if (peerConnection) {
             peerConnection.close();
             delete this.peerConnections[participantId];
+        }
+
+        if (this.dataChannels[participantId]) {
+            this.dataChannels[participantId].close();
+            delete this.dataChannels[participantId];
         }
         
         // Remove video element

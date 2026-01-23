@@ -2,7 +2,7 @@
 $host = 'localhost';
 $dbname = 'interview_room';
 $username = 'root';
-$password = 'root';
+$password = '';
 
 
 
