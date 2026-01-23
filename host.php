@@ -2,99 +2,57 @@
 $room_id = $_GET['room'] ?? '';
 $host_name = $_GET['name'] ?? 'Host';
 
-if (empty($room_id)) {
+if(empty($room_id)) {
     header('Location: index.php');
     exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Host Control Panel | CodeMeet</title>
+    <title>Host Control Panel | InterviewPro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- CodeMirror -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        * {
-            font-family: 'Inter', sans-serif;
-        }
-
+        * { font-family: 'Inter', sans-serif; }
+        
         /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
         /* Video styles */
         .video-container video {
             object-fit: cover;
             border-radius: 12px;
         }
-
+        
         /* Pulse for active speaker */
         @keyframes pulse-ring {
-            0% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            }
-
-            70% {
-                transform: scale(1);
-                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-            }
-
-            100% {
-                transform: scale(0.95);
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-            }
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
-
-        .speaking {
-            animation: pulse-ring 2s infinite;
-        }
-
+        
+        .speaking { animation: pulse-ring 2s infinite; }
+        
         /* Recording animation */
         @keyframes recording-pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
-
-        .recording {
-            animation: recording-pulse 1.5s infinite;
-        }
+        
+        .recording { animation: recording-pulse 1.5s infinite; }
     </style>
 </head>
-
 <body class="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
     <div class="container mx-auto px-4 py-6 max-w-7xl">
         <!-- Top Header -->
@@ -102,32 +60,27 @@ if (empty($room_id)) {
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div class="flex items-center gap-4">
                     <div class="relative">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
                             <i class="fas fa-crown text-white text-xl"></i>
                         </div>
-                        <div
-                            class="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
+                        <div class="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
                             <i class="fas fa-crown text-white text-xs"></i>
                         </div>
                     </div>
-
+                    
                     <div>
                         <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                             Host Control Panel
-                            <span
-                                class="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">LIVE</span>
+                            <span class="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">LIVE</span>
                         </h1>
                         <div class="flex flex-wrap items-center gap-4 mt-3">
                             <div class="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-xl">
                                 <i class="fas fa-hashtag text-blue-600"></i>
-                                <span
-                                    class="font-mono font-bold text-blue-800 text-lg"><?php echo htmlspecialchars($room_id); ?></span>
+                                <span class="font-mono font-bold text-blue-800 text-lg"><?php echo htmlspecialchars($room_id); ?></span>
                             </div>
                             <div class="flex items-center gap-2 bg-purple-50 px-4 py-2 rounded-xl">
                                 <i class="fas fa-user-tie text-purple-600"></i>
-                                <span
-                                    class="font-semibold text-gray-800"><?php echo htmlspecialchars($host_name); ?></span>
+                                <span class="font-semibold text-gray-800"><?php echo htmlspecialchars($host_name); ?></span>
                             </div>
                             <div class="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-xl">
                                 <i class="fas fa-users text-green-600"></i>
@@ -137,39 +90,33 @@ if (empty($room_id)) {
                         </div>
                     </div>
                 </div>
-
+                
                 <!-- Main Controls -->
                 <div class="flex flex-wrap gap-3">
-                    <button id="startInterview"
-                        class="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <button id="startInterview" class="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl">
                         <i class="fas fa-play-circle text-lg"></i>
                         <span class="font-semibold">Start Interview</span>
                     </button>
-
-                    <button id="endInterview"
-                        class="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    
+                    <button id="endInterview" class="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl">
                         <i class="fas fa-stop-circle text-lg"></i>
                         <span class="font-semibold">End Interview</span>
                     </button>
-
-                    <button id="toggleVideo"
-                        class="flex items-center gap-2 px-5 py-3.5 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow">
+                    
+                    <button id="toggleVideo" class="flex items-center gap-2 px-5 py-3.5 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow">
                         <i class="fas fa-video text-gray-700"></i>
                         <span class="font-medium text-gray-700">Video</span>
-                        <span id="videoStatus"
-                            class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full">ON</span>
+                        <span id="videoStatus" class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full">ON</span>
                     </button>
-
-                    <button id="toggleAudio"
-                        class="flex items-center gap-2 px-5 py-3.5 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow">
+                    
+                    <button id="toggleAudio" class="flex items-center gap-2 px-5 py-3.5 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow">
                         <i class="fas fa-microphone text-gray-700"></i>
                         <span class="font-medium text-gray-700">Audio</span>
-                        <span id="audioStatus"
-                            class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full">ON</span>
+                        <span id="audioStatus" class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full">ON</span>
                     </button>
                 </div>
             </div>
-
+            
             <!-- Status Bar -->
             <div class="mt-8 pt-6 border-t border-gray-200">
                 <div class="flex flex-wrap items-center justify-between gap-4">
@@ -177,14 +124,12 @@ if (empty($room_id)) {
                         <div class="flex items-center gap-3">
                             <div class="flex items-center gap-2">
                                 <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                                <span class="text-sm text-gray-700"><span class="font-semibold">Connection:</span>
-                                    Excellent</span>
+                                <span class="text-sm text-gray-700"><span class="font-semibold">Connection:</span> Excellent</span>
                             </div>
                             <div class="h-4 w-px bg-gray-300"></div>
                             <div class="flex items-center gap-2">
                                 <i class="fas fa-database text-blue-500"></i>
-                                <span class="text-sm text-gray-700"><span class="font-semibold">Bitrate:</span> 2.5
-                                    Mbps</span>
+                                <span class="text-sm text-gray-700"><span class="font-semibold">Bitrate:</span> 2.5 Mbps</span>
                             </div>
                             <div class="h-4 w-px bg-gray-300"></div>
                             <div class="flex items-center gap-2">
@@ -193,25 +138,21 @@ if (empty($room_id)) {
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="flex items-center gap-3">
-                        <button id="recordBtn"
-                            class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        <button id="recordBtn" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                             <i class="fas fa-circle text-gray-500"></i>
                             <span class="text-sm font-medium text-gray-700">Record</span>
                         </button>
-                        <button
-                            class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        <button class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                             <i class="fas fa-desktop text-gray-600"></i>
                             <span class="text-sm font-medium text-gray-700">Share Screen</span>
                         </button>
-                        <button
-                            class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        <button class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                             <i class="fas fa-comment-dots text-gray-600"></i>
                             <span class="text-sm font-medium text-gray-700">Chat</span>
                         </button>
-                        <button
-                            class="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200">
+                        <button class="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200">
                             <i class="fas fa-cog text-blue-600"></i>
                             <span class="text-sm font-medium text-blue-700">Settings</span>
                         </button>
@@ -219,6 +160,53 @@ if (empty($room_id)) {
                 </div>
             </div>
         </header>
+
+        <!-- Code Editor Section -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 mb-8">
+            <div class="p-5 bg-gradient-to-r from-purple-600 to-purple-700">
+                <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                    <i class="fas fa-code"></i>
+                    Code Editor
+                    <span class="bg-white/20 text-white text-sm font-medium px-3 py-1 rounded-full">Real-time Collaboration</span>
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="bg-gray-900 rounded-xl overflow-hidden">
+                    <div class="p-4 bg-gray-800 border-b border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                    <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                </div>
+                                <span class="text-gray-300 text-sm font-medium">JavaScript - index.js</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="runCode" class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded">
+                                    <i class="fas fa-play"></i> Run
+                                </button>
+                                <button id="toggleParticipantEditing" class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded">
+                                    <i class="fas fa-edit"></i> Allow Editing
+                                </button>
+                                <button class="text-gray-400 hover:text-white text-sm px-3 py-1 rounded">
+                                    <i class="fas fa-share"></i> Share
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="code-editor" class="w-full h-96 bg-gray-900 text-gray-100 font-mono text-sm p-4 resize-none" placeholder="Start coding...">// Welcome to the collaborative code editor!
+// Your code will be synchronized in real-time with all participants
+
+function helloWorld() {
+    console.log("Hello, World!");
+    return "Welcome to the interview!";
+}
+
+// Try typing some code here...</textarea>
+                </div>
+            </div>
+        </div>
 
         <!-- Main Content Area -->
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
@@ -228,8 +216,7 @@ if (empty($room_id)) {
                     <div class="p-5 bg-gradient-to-r from-gray-800 to-gray-900">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div
-                                    class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
                                     <i class="fas fa-crown text-white"></i>
                                 </div>
                                 <div>
@@ -243,13 +230,12 @@ if (empty($room_id)) {
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="relative bg-gray-900 aspect-video">
                         <video id="localVideo" autoplay muted playsinline class="w-full h-full"></video>
-
+                        
                         <!-- Host Controls Overlay -->
-                        <div
-                            class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-3 bg-black/60 backdrop-blur-sm px-5 py-3 rounded-full">
+                        <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-3 bg-black/60 backdrop-blur-sm px-5 py-3 rounded-full">
                             <button class="p-3 bg-white/20 hover:bg-white/30 rounded-full transition-colors">
                                 <i class="fas fa-expand text-white"></i>
                             </button>
@@ -263,22 +249,20 @@ if (empty($room_id)) {
                                 <i class="fas fa-filter text-white"></i>
                             </button>
                         </div>
-
+                        
                         <!-- Muted Indicator -->
-                        <div
-                            class="absolute top-6 right-6 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2">
+                        <div class="absolute top-6 right-6 bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2">
                             <i class="fas fa-volume-mute text-white"></i>
                             <span class="text-white text-sm font-medium">Your audio is muted</span>
                         </div>
-
+                        
                         <!-- Host Badge -->
-                        <div
-                            class="absolute top-6 left-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                        <div class="absolute top-6 left-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-4 py-2 rounded-full flex items-center gap-2">
                             <i class="fas fa-crown"></i>
                             <span class="font-semibold">HOST</span>
                         </div>
                     </div>
-
+                    
                     <!-- Video Stats -->
                     <div class="p-4 bg-gray-50 border-t border-gray-200">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -301,15 +285,14 @@ if (empty($room_id)) {
                         </div>
                     </div>
                 </div>
-
+                
                 <!-- Participants Grid -->
                 <div class="mt-8">
                     <div class="flex items-center justify-between mb-6">
                         <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
                             <i class="fas fa-users text-blue-600"></i>
                             Active Participants
-                            <span id="activeParticipants"
-                                class="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-full">0</span>
+                            <span id="activeParticipants" class="bg-blue-100 text-blue-800 text-sm font-bold px-3 py-1 rounded-full">0</span>
                         </h2>
                         <div class="flex items-center gap-3">
                             <button class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
@@ -323,56 +306,34 @@ if (empty($room_id)) {
                             </button>
                         </div>
                     </div>
-
-                    <!-- Code Editor Section -->
-                    <div class="mb-8 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-                        <div class="p-4 bg-gray-900 flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <i class="fas fa-code text-blue-400"></i>
-                                <span class="text-white font-mono font-bold">Live Code Editor</span>
-                            </div>
-                            <span class="text-xs text-gray-400">Synced with participants</span>
-                        </div>
-                        <div class="h-[400px]">
-                            <textarea id="code-editor"></textarea>
-                        </div>
-                    </div>
-
+                    
                     <div id="remoteVideos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <!-- Empty State -->
-                        <div
-                            class="col-span-full bg-white rounded-2xl p-8 text-center border-2 border-dashed border-gray-300">
-                            <div
-                                class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div class="col-span-full bg-white rounded-2xl p-8 text-center border-2 border-dashed border-gray-300">
+                            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <i class="fas fa-user-plus text-gray-400 text-3xl"></i>
                             </div>
                             <h3 class="text-xl font-semibold text-gray-600 mb-2">Waiting for participants</h3>
                             <p class="text-gray-500 mb-6">Participants will appear here when they join the interview</p>
-                            <button
-                                class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium transition-colors">
+                            <button class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium transition-colors">
                                 <i class="fas fa-share-alt"></i>
                                 Share Invite Link
                             </button>
                         </div>
-
+                        
                         <!-- Participant Template (Hidden) -->
                         <div id="participantTemplate" class="hidden">
-                            <div
-                                class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-all duration-200">
+                            <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-all duration-200">
                                 <div class="relative bg-gray-800 aspect-video">
                                     <!-- Video will be inserted here -->
-                                    <div
-                                        class="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                                        <div
-                                            class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                                    <div class="absolute inset-0 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                                             <span class="text-white font-bold text-xl">JD</span>
                                         </div>
                                     </div>
                                     <!-- Status Badges -->
                                     <div class="absolute top-3 left-3">
-                                        <span
-                                            class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full">VIDEO
-                                            ON</span>
+                                        <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full">VIDEO ON</span>
                                     </div>
                                     <div class="absolute top-3 right-3">
                                         <div class="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -412,76 +373,72 @@ if (empty($room_id)) {
                         <h2 class="text-xl font-bold text-white flex items-center gap-3">
                             <i class="fas fa-list-check"></i>
                             Connected Participants
-                            <span id="connectedCount"
-                                class="bg-white/20 text-white text-sm font-bold px-3 py-1 rounded-full">0</span>
+                            <span id="connectedCount" class="bg-white/20 text-white text-sm font-bold px-3 py-1 rounded-full">0</span>
                         </h2>
                     </div>
-
+                    
                     <div class="p-4 max-h-[500px] overflow-y-auto">
                         <div id="participantsList" class="space-y-3">
                             <!-- Empty State -->
                             <div class="text-center py-8">
                                 <i class="fas fa-users text-gray-300 text-4xl mb-3"></i>
                                 <p class="text-gray-500 font-medium">No participants connected</p>
+                                <p class="text-gray-400 text-sm mt-2">Participants will appear here when they join</p>
+                            </div>
+                        </div>
+
+                        <!-- Participant Status Summary -->
+                        <div id="participantStats" class="mt-6 p-4 bg-gray-50 rounded-lg hidden">
+                            <h4 class="font-semibold text-gray-800 mb-3">Room Statistics</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-users text-blue-500"></i>
+                                    <span id="totalParticipants">0</span>
+                                    <span class="text-gray-600">Total</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-video text-green-500"></i>
+                                    <span id="videoEnabled">0</span>
+                                    <span class="text-gray-600">Video On</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-microphone text-green-500"></i>
+                                    <span id="audioEnabled">0</span>
+                                    <span class="text-gray-600">Audio On</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-clock text-gray-500"></i>
+                                    <span id="avgConnection">Good</span>
+                                    <span class="text-gray-600">Quality</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- Quick Actions -->
                     <div class="p-4 border-t border-gray-200 bg-gray-50">
                         <h3 class="font-semibold text-gray-700 mb-3">Quick Actions</h3>
                         <div class="grid grid-cols-2 gap-3">
-                            <button
-                                class="p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            <button class="p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-center">
                                 <i class="fas fa-microphone-slash text-red-500 mb-1"></i>
                                 <p class="text-xs font-medium text-gray-700">Mute All</p>
                             </button>
-                            <button
-                                class="p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            <button class="p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-center">
                                 <i class="fas fa-video-slash text-red-500 mb-1"></i>
                                 <p class="text-xs font-medium text-gray-700">Stop Videos</p>
                             </button>
-                            <button
-                                class="p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            <button class="p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-center">
                                 <i class="fas fa-user-plus text-blue-500 mb-1"></i>
                                 <p class="text-xs font-medium text-gray-700">Invite More</p>
                             </button>
-                            <button
-                                class="p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-center">
+                            <button class="p-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-center">
                                 <i class="fas fa-download text-green-500 mb-1"></i>
                                 <p class="text-xs font-medium text-gray-700">Export List</p>
                             </button>
                         </div>
                     </div>
                 </div>
-
-                <!-- Chat Section -->
-                <div id="chat-container"
-                    class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 mb-8 flex flex-col h-[400px]">
-                    <div class="p-4 bg-gradient-to-r from-blue-600 to-purple-600 flex justify-between items-center">
-                        <h2 class="text-white font-bold flex items-center gap-2">
-                            <i class="fas fa-comments"></i> Chat
-                        </h2>
-                        <span class="bg-white/20 text-white text-xs px-2 py-1 rounded-full">Live</span>
-                    </div>
-
-                    <div class="messages-list flex-1 p-4 overflow-y-auto bg-gray-50">
-                        <!-- Messages will appear here -->
-                        <div class="text-center text-gray-400 text-sm mt-4">Welcome to the chat!</div>
-                    </div>
-
-                    <div class="p-3 bg-white border-t border-gray-200">
-                        <div class="flex gap-2">
-                            <input type="text" placeholder="Type a message..."
-                                class="flex-1 border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:border-blue-500 text-sm">
-                            <button
-                                class="send-btn bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
+                
                 <!-- Interview Controls -->
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
                     <div class="p-5 bg-gradient-to-r from-gray-800 to-gray-900">
@@ -490,7 +447,7 @@ if (empty($room_id)) {
                             Interview Controls
                         </h2>
                     </div>
-
+                    
                     <div class="p-5 space-y-6">
                         <!-- Recording Control -->
                         <div>
@@ -502,8 +459,7 @@ if (empty($room_id)) {
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <button
-                                    class="flex-1 py-3 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg font-medium border border-red-200">
+                                <button class="flex-1 py-3 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg font-medium border border-red-200">
                                     <i class="fas fa-circle mr-2"></i>
                                     Start Recording
                                 </button>
@@ -512,26 +468,24 @@ if (empty($room_id)) {
                                 </button>
                             </div>
                         </div>
-
+                        
                         <!-- Session Timer -->
                         <div class="bg-gray-50 p-4 rounded-xl">
                             <div class="flex items-center justify-between mb-2">
                                 <h3 class="font-semibold text-gray-800">Session Duration</h3>
                                 <i class="far fa-clock text-gray-500"></i>
                             </div>
-                            <p id="controlTimer" class="text-3xl font-bold text-gray-800 font-mono text-center">00:00:00
-                            </p>
+                            <p id="controlTimer" class="text-3xl font-bold text-gray-800 font-mono text-center">00:00:00</p>
                             <p class="text-sm text-gray-500 text-center">Interview in progress</p>
                         </div>
-
+                        
                         <!-- Interview Status -->
                         <div>
                             <h3 class="font-semibold text-gray-800 mb-3">Interview Status</h3>
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
                                     <span class="text-gray-600">Room Status</span>
-                                    <span
-                                        class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">ACTIVE</span>
+                                    <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">ACTIVE</span>
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="text-gray-600">Participants</span>
@@ -553,8 +507,7 @@ if (empty($room_id)) {
             <div class="max-w-7xl mx-auto flex items-center justify-between gap-6">
                 <div class="flex items-center gap-4">
                     <div class="hidden lg:flex items-center gap-3">
-                        <div
-                            class="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                             <i class="fas fa-crown text-white"></i>
                         </div>
                         <div>
@@ -562,48 +515,42 @@ if (empty($room_id)) {
                             <p class="font-bold text-gray-800"><?php echo htmlspecialchars($room_id); ?></p>
                         </div>
                     </div>
-
+                    
                     <div class="flex items-center gap-2 text-green-600">
                         <i class="fas fa-shield-alt"></i>
                         <span class="text-sm">Room encrypted</span>
                     </div>
                 </div>
-
+                
                 <div class="flex items-center gap-4">
-                    <button id="toggleVideoBottom"
-                        class="flex flex-col items-center p-3 rounded-xl hover:bg-gray-100 transition-colors">
+                    <button id="toggleVideoBottom" class="flex flex-col items-center p-3 rounded-xl hover:bg-gray-100 transition-colors">
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1">
                             <i class="fas fa-video text-blue-600 text-lg"></i>
                         </div>
                         <span class="text-xs font-medium text-gray-700">Video</span>
                     </button>
-
-                    <button id="toggleAudioBottom"
-                        class="flex flex-col items-center p-3 rounded-xl hover:bg-gray-100 transition-colors">
+                    
+                    <button id="toggleAudioBottom" class="flex flex-col items-center p-3 rounded-xl hover:bg-gray-100 transition-colors">
                         <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-1">
                             <i class="fas fa-microphone text-green-600 text-lg"></i>
                         </div>
                         <span class="text-xs font-medium text-gray-700">Audio</span>
                     </button>
-
-                    <button id="startInterviewBottom"
-                        class="flex flex-col items-center p-3 rounded-xl hover:bg-green-50 transition-colors">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-1 shadow-lg">
+                    
+                    <button id="startInterviewBottom" class="flex flex-col items-center p-3 rounded-xl hover:bg-green-50 transition-colors">
+                        <div class="w-14 h-14 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-1 shadow-lg">
                             <i class="fas fa-play text-white text-xl"></i>
                         </div>
                         <span class="text-xs font-medium text-green-700">Start</span>
                     </button>
-
-                    <button id="endInterviewBottom"
-                        class="flex flex-col items-center p-3 rounded-xl hover:bg-red-50 transition-colors">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mb-1 shadow-lg">
+                    
+                    <button id="endInterviewBottom" class="flex flex-col items-center p-3 rounded-xl hover:bg-red-50 transition-colors">
+                        <div class="w-14 h-14 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mb-1 shadow-lg">
                             <i class="fas fa-stop text-white text-xl"></i>
                         </div>
                         <span class="text-xs font-medium text-red-700">End</span>
                     </button>
-
+                    
                     <button class="flex flex-col items-center p-3 rounded-xl hover:bg-gray-100 transition-colors">
                         <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-1">
                             <i class="fas fa-ellipsis-h text-gray-600 text-lg"></i>
@@ -611,7 +558,7 @@ if (empty($room_id)) {
                         <span class="text-xs font-medium text-gray-700">More</span>
                     </button>
                 </div>
-
+                
                 <div class="hidden lg:block">
                     <div class="text-right">
                         <p id="bottomTimer" class="font-mono font-bold text-gray-800 text-lg">00:00:00</p>
@@ -622,16 +569,11 @@ if (empty($room_id)) {
         </div>
     </div>
 
-    <script type="module" src="js/host.js"></script>
-    <script type="module">
-        import { ChatRoom } from './js/chat.js';
-
+    <script src="js/host.js"></script>
+    <script>
         const roomId = "<?php echo $room_id; ?>";
         const userName = "<?php echo $host_name; ?>";
-
-        // Initialize Chat
-        new ChatRoom(roomId, userName, 'chat-container');
-
+        
         // Session Timer
         let sessionSeconds = 0;
         const sessionTimer = setInterval(() => {
@@ -639,26 +581,26 @@ if (empty($room_id)) {
             const hours = Math.floor(sessionSeconds / 3600).toString().padStart(2, '0');
             const minutes = Math.floor((sessionSeconds % 3600) / 60).toString().padStart(2, '0');
             const seconds = (sessionSeconds % 60).toString().padStart(2, '0');
-
+            
             document.getElementById('sessionTimer').textContent = `${hours}:${minutes}:${seconds}`;
             document.getElementById('controlTimer').textContent = `${hours}:${minutes}:${seconds}`;
             document.getElementById('bottomTimer').textContent = `${hours}:${minutes}:${seconds}`;
         }, 1000);
-
+        
         // Control Toggles
         let videoEnabled = true;
         let audioEnabled = true;
         let interviewStarted = false;
-
+        
         // Video Toggle
         document.getElementById('toggleVideo').addEventListener('click', toggleVideo);
         document.getElementById('toggleVideoBottom').addEventListener('click', toggleVideo);
-
+        
         function toggleVideo() {
             videoEnabled = !videoEnabled;
             const status = document.getElementById('videoStatus');
-
-            if (videoEnabled) {
+            
+            if(videoEnabled) {
                 status.textContent = 'ON';
                 status.className = 'bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full';
             } else {
@@ -666,16 +608,17 @@ if (empty($room_id)) {
                 status.className = 'bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full';
             }
         }
-
-        // Audio Toggle
         document.getElementById('toggleAudio').addEventListener('click', toggleAudio);
         document.getElementById('toggleAudioBottom').addEventListener('click', toggleAudio);
+        
 
+
+        
         function toggleAudio() {
             audioEnabled = !audioEnabled;
             const status = document.getElementById('audioStatus');
-
-            if (audioEnabled) {
+            
+            if(audioEnabled) {
                 status.textContent = 'ON';
                 status.className = 'bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full';
             } else {
@@ -683,106 +626,162 @@ if (empty($room_id)) {
                 status.className = 'bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full';
             }
         }
-
+        
         // Start Interview
         document.getElementById('startInterview').addEventListener('click', startInterview);
         document.getElementById('startInterviewBottom').addEventListener('click', startInterview);
-
+        
         function startInterview() {
             interviewStarted = true;
-            // logic to actually enable room in firestore is handled by HostWebRTC init
-            // But we can add UI feedback
             alert('Interview session started! Participants can now join.');
+            
+            // Simulate participants joining
+            setTimeout(() => {
+                document.getElementById('participantCount').textContent = '3';
+                document.getElementById('activeParticipants').textContent = '3';
+                document.getElementById('connectedCount').textContent = '3';
+                
+                // Update participants list
+                const participantsList = document.getElementById('participantsList');
+                participantsList.innerHTML = `
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold">JD</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Jane Doe</p>
+                                <p class="text-xs text-gray-500">Candidate • Joined 2 min ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Video ON</span>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Audio ON</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold">RS</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Robert Smith</p>
+                                <p class="text-xs text-gray-500">Interviewer • Joined 1 min ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Video OFF</span>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Audio ON</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold">MJ</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-800">Mike Johnson</p>
+                                <p class="text-xs text-gray-500">Observer • Joined 30 sec ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Video ON</span>
+                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Audio OFF</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Update remote videos grid
+                const remoteVideos = document.getElementById('remoteVideos');
+                remoteVideos.innerHTML = `
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+                        <div class="relative bg-gray-800 aspect-video">
+                            <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center">
+                                    <span class="text-white font-bold text-2xl">JD</span>
+                                </div>
+                            </div>
+                            <div class="absolute top-3 left-3">
+                                <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full">VIDEO ON</span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-gray-800">Jane Doe</h4>
+                                    <p class="text-sm text-gray-500">Candidate</p>
+                                </div>
+                                <button class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                                    <i class="fas fa-user-slash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+                        <div class="relative bg-gray-800 aspect-video">
+                            <div class="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
+                                    <span class="text-white font-bold text-2xl">RS</span>
+                                </div>
+                            </div>
+                            <div class="absolute top-3 left-3">
+                                <span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full">VIDEO OFF</span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-gray-800">Robert Smith</h4>
+                                    <p class="text-sm text-gray-500">Interviewer</p>
+                                </div>
+                                <button class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                                    <i class="fas fa-user-slash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+                        <div class="relative bg-gray-800 aspect-video">
+                            <div class="absolute inset-0 bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+                                    <span class="text-white font-bold text-2xl">MJ</span>
+                                </div>
+                            </div>
+                            <div class="absolute top-3 left-3">
+                                <span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded-full">VIDEO ON</span>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-gray-800">Mike Johnson</h4>
+                                    <p class="text-sm text-gray-500">Observer</p>
+                                </div>
+                                <button class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                                    <i class="fas fa-user-slash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }, 1000);
         }
-
+        
         // End Interview
         document.getElementById('endInterview').addEventListener('click', endInterview);
         document.getElementById('endInterviewBottom').addEventListener('click', endInterview);
-
+        
         function endInterview() {
-            if (confirm('Are you sure you want to end the interview for all participants?')) {
+            if(confirm('Are you sure you want to end the interview for all participants?')) {
                 clearInterval(sessionTimer);
                 alert('Interview ended. All participants will be disconnected.');
                 // In real app, you would call your backend to end the session
                 // window.location.href = 'index.php';
             }
         }
-
-        // Initialize Host WebRTC/Signaling
-        console.log("Initializing Host application...");
-        const host = new HostWebRTC(roomId, userName);
-        window.hostRTC = host;
-
-        // Initialize Chat
-        new ChatRoom(roomId, userName, 'chat-container');
-
-        // Control Toggles and other event listeners are already attached by ID above in the DOM, 
-        // effectively global scope, but functions need to be available?
-        // Wait, startInterview() etc are defined in the previous block I replaced?
-        // NO. The previous block started at line 626 (in Step 126 output).
-        // I need to be careful: the functions startInterview, toggleVideo, etc. are INSIDE the <script> tag I am replacing.
-        // If I make it type="module", they are NOT global anymore.
-        // But the HTML elements use `addEventListener` in the script.
-        // So as long as the script runs, it attaches the listeners.
-        // I need to include those functions in my replacement content or ensure they are present.
-        // The view_file output shows they are present lines 648-709.
-        // My replace target starts at line 711.
-        // Ah! Good catch. lines 648-709 are functioning.
-        // I am only replacing the initialization block at the end (711-722).
-        // BUT wait, I previously replaced the TOP of the script tag in Step 86.
-        // `host.php` currently has:
-        // Line 625: <script type="module" src="js/host.js"></script>
-    // Line 626:
-    <script type="module"> import { ChatRoom } ...
-        // inside that block, I have definitions of startInterview etc?
-        // No, in Step 86 I merged them.
-        // In the current View (Step 131), line 723 is `</script>`.
-    // The script starts way back.
-    // If I replace only the bottom part, the top part still has `import { ChatRoom }`.
-    // And I am adding `import { HostWebRTC }`.
-    // AND `import { ChatRoom }` is already at the top?
-    // Let's check the top of the script in Step 126? No, I viewed 680-726.
-    // I need to check if proper imports are reachable.
-    // IMPORTS MUST BE AT TOP LEVEL.
-    // If I put imports in the middle of the script (inside `if`? no), it's Syntax Error.
-    // If I replace the bottom block with `import ...`, it will be a Syntax Error if it's not at the top.
-
-    // Strategy: Replace the ENTIRE script block content to be safe and clean.
-    // I need to read the whole file or at least the start of the script block.
-    // But I know what's in there from Step 86.
-    // The script tag starts at 626.
-
-    // Code is:
-    /*
-    <script type="module">
-        import { ChatRoom } from './js/chat.js';
-        const roomId ...
-        // ... functions ...
-        // Init logic
+        
+        // Initialize your host logic
+        initializeHost(roomId, userName);
     </script>
-    */
-
-    // I want to change it to:
-    /*
-    <script type="module">
-        import { HostWebRTC } from './js/host.js';
-        import { ChatRoom } from './js/chat.js';
-        const roomId ...
-        // ... functions ...
-        // Init logic
-    </script>
-    */
-
-    // So I should replace the entire script logic? Or just add the import at the top?
-    // Adding import at the top is safer for the functions in the middle.
-    // Then replace the init logic at the bottom.
-
-    // I will do 2 Replace calls.
-
-    // Call 1: Add import at top.
-    // Call 2: Replace init logic at bottom.
-
-
 </body>
-
 </html>
