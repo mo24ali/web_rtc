@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rooms collection
+    match /rooms/{roomId} {
+      allow read, write: if true; // Allow anyone to read/write for now (for development)
+      
+      // Messages subcollection
+      match /messages/{messageId} {
+        // Allow read: if the user is authenticated (even anonymously)
+        allow read: if request.auth != null;
+        
+        // Allow create: if authenticated and data has required fields
+        allow create: if request.auth != null
+                     && request.resource.data.text is string
+                     && request.resource.data.text.size() > 0
+                     && request.resource.data.uid == request.auth.uid; // Ensure user sends their own UID
+      }
+      
+      // Participants subcollection (for signaling)
+      match /participants/{participantId} {
+        allow read, write: if true; // Allow for signaling purposes
+      }
+    }
+  }
+}
