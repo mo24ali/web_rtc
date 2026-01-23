@@ -1,11 +1,15 @@
-class ParticipantWebRTC {
+import { FirestoreSignaling } from './signaling-firestore.js';
+
+export class ParticipantWebRTC {
     constructor(roomId, userName) {
         this.roomId = roomId;
         this.userName = userName;
-        this.peerConnections = {};
-        this.dataChannels = {};
+        this.peerConnections = {}; // Keyed by 'host' usually, or other participant IDs if full mesh
+        this.hostId = 'host'; // Identifying the host connection
+
         this.localStream = null;
-        this.socket = null;
+        this.signaling = new FirestoreSignaling(roomId, userName, false);
+
         this.configuration = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -18,11 +22,12 @@ class ParticipantWebRTC {
 
         this.init();
     }
+    // ... rest of class remains valid ...
 
     async init() {
         this.initEditor();
         await this.initLocalStream();
-        this.initSocket();
+        await this.initSignaling();
         this.setupEventListeners();
     }
 
@@ -46,10 +51,9 @@ class ParticipantWebRTC {
         this.editor.on('change', (cm, change) => {
             if (!this.isReceiving && !cm.getOption('readOnly')) {
                 const content = cm.getValue();
-                this.sendCodeUpdate(content);
+                this.signaling.sendCodeUpdate(content);
             }
         });
-    }
 
     sendCodeUpdate(content) {
         // Send to host and all other participants
@@ -193,14 +197,10 @@ class ParticipantWebRTC {
     initSocket() {
         this.socket = new WebSocket('ws://localhost:8080');
 
-        this.socket.onopen = () => {
-            console.log('Connected to signaling server');
-            this.socket.send(JSON.stringify({
-                type: 'participant',
-                room: this.roomId,
-                name: this.userName
-            }));
-        };
+        this.signaling.on('ice-candidate', async (candidate) => {
+            console.log('Received ICE candidate from host');
+            await this.handleICECandidate(candidate);
+        });
 
         this.socket.onmessage = async (event) => {
             const message = JSON.parse(event.data);
@@ -244,8 +244,8 @@ class ParticipantWebRTC {
         };
     }
 
-    async handleOffer(message) {
-        // Create peer connection for host
+    async handleOffer(offer) {
+        console.log('Handling offer');
         const peerConnection = new RTCPeerConnection(this.configuration);
         this.peerConnections[message.from] = peerConnection;
 
@@ -298,48 +298,49 @@ class ParticipantWebRTC {
             };
         };
 
-        // Add local stream
+        // Add local tracks
         this.localStream.getTracks().forEach(track => {
             peerConnection.addTrack(track, this.localStream);
         });
 
-        // Setup ICE candidate
+        // Handle ICE candidates
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                this.socket.send(JSON.stringify({
-                    type: 'ice-candidate',
-                    target: message.from,
-                    candidate: event.candidate,
-                    room: this.roomId
-                }));
+                // Send to host (targetId is actually not used in method implementation for participant sending to host, 
+                // but we pass something or method logic handles it based on isHost flag)
+                this.signaling.sendIceCandidate('host', event.candidate);
             }
         };
 
-        // Setup remote stream (host video)
+        // Handle remote stream (Host video)
         peerConnection.ontrack = (event) => {
+            console.log('Received host track');
             const hostVideo = document.getElementById('hostVideo');
-            if (hostVideo && !hostVideo.srcObject) {
+            if (hostVideo) {
                 hostVideo.srcObject = event.streams[0];
+
+                // Hide waiting state
+                const hostWaiting = document.getElementById('hostWaiting');
+                if (hostWaiting) hostWaiting.style.display = 'none';
+
+                // Update Host Info UI
+                const container = hostVideo.closest('.bg-white'); // parent card
+                if (container) {
+                    const statusText = container.querySelector('.text-blue-100');
+                    if (statusText) statusText.textContent = 'Connected';
+                }
             }
         };
 
-        // Set remote description and create answer
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
+        try {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
 
-        this.socket.send(JSON.stringify({
-            type: 'answer',
-            target: message.from,
-            answer: answer,
-            room: this.roomId
-        }));
-    }
-
-    async handleAnswer(message) {
-        const peerConnection = this.peerConnections[message.from];
-        if (peerConnection) {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer));
+            console.log('Sending answer');
+            await this.signaling.sendAnswer(answer);
+        } catch (e) {
+            console.error('Error handling offer:', e);
         }
     }
 
@@ -475,9 +476,9 @@ class ParticipantWebRTC {
         const peerConnection = this.peerConnections[message.from];
         if (peerConnection && message.candidate) {
             try {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
-            } catch (error) {
-                console.error('Error adding ICE candidate:', error);
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (e) {
+                console.error('Error adding ICE candidate:', e);
             }
         }
     }
@@ -605,9 +606,10 @@ class ParticipantWebRTC {
             }
         });
 
-        document.getElementById('leaveRoom').addEventListener('click', () => {
+        document.getElementById('leaveRoom').addEventListener('click', async () => {
             if (confirm('Leave the interview room?')) {
-                this.leaveRoom();
+                await this.signaling.leaveRoom();
+                window.location.href = 'index.php';
             }
         });
     }
@@ -721,11 +723,9 @@ class ParticipantWebRTC {
             console.error('Error leaving room:', error);
         }
 
-        // Redirect to home
-        window.location.href = 'index.php';
+        window.addEventListener('beforeunload', () => {
+            this.signaling.leaveRoom();
+        });
     }
 }
 
-function initializeParticipant(roomId, userName) {
-    window.participantRTC = new ParticipantWebRTC(roomId, userName);
-}
