@@ -50,12 +50,13 @@ if (empty($room_id)) {
                     </div>
                 </div>
             </div>
+        </main>
 
             <div class="editor-section">
                 <h3>Collaborative Code Editor</h3>
                 <textarea id="code-editor"></textarea>
             </div>
-        </div>
+        </footer>
     </div>
 
     <!-- CodeMirror JS -->
