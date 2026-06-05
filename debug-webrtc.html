@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffe6e6; color: #d32f2f; }
+        .success { background: #e6ffe6; color: #2e7d32; }
+        video { border: 2px solid #333; margin: 5px; width: 200px; height: 150px; }
+        #log { height: 300px; overflow-y: auto; background: #000; color: #0f0; font-family: monospace; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>WebRTC Debug Test</h1>
+
+    <div class="debug">
+        <h3>Connection Status</h3>
+        <div id="status">Not connected</div>
+    </div>
+
+    <div class="debug">
+        <h3>Local Video</h3>
+        <video id="localVideo" autoplay muted></video>
+        <button onclick="startCamera()">Start Camera</button>
+        <button onclick="stopCamera()">Stop Camera</button>
+    </div>
+
+    <div class="debug">
+        <h3>Remote Videos</h3>
+        <div id="remoteVideos"></div>
+    </div>
+
+    <div class="debug">
+        <h3>Test Code Editor</h3>
+        <textarea id="code-editor" rows="10" cols="50" placeholder="Type code here..."></textarea>
+        <button onclick="sendCode()">Send Code</button>
+    </div>
+
+    <div class="debug">
+        <h3>Debug Log</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        let localStream = null;
+        let socket = null;
+        const remoteVideos = document.getElementById('remoteVideos');
+        const logElement = document.getElementById('log');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+
+        async function startCamera() {
+            try {
+                log('Requesting camera access...');
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+
+                document.getElementById('localVideo').srcObject = localStream;
+                log('✅ Camera started successfully');
+            } catch (error) {
+                log('❌ Camera error: ' + error.message);
+            }
+        }
+
+        function stopCamera() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+                document.getElementById('localVideo').srcObject = null;
+                log('📷 Camera stopped');
+            }
+        }
+
+        function connectToServer() {
+            log('Connecting to WebSocket server...');
+            socket = new WebSocket('ws://localhost:8080');
+
+            socket.onopen = () => {
+                log('✅ Connected to signaling server');
+                document.getElementById('status').innerHTML = '<span style="color: green;">Connected</span>';
+
+                // Test participant connection
+                socket.send(JSON.stringify({
+                    type: 'participant',
+                    room: 'DEBUG123',
+                    name: 'Debug User'
+                }));
+            };
+
+            socket.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                log(`📨 Message received: ${message.type}`);
+
+                if (message.type === 'existingParticipants') {
+                    log(`👥 Found ${message.participants.length} existing participants`);
+                }
+            };
+
+            socket.onclose = () => {
+                log('❌ WebSocket connection closed');
+                document.getElementById('status').innerHTML = '<span style="color: red;">Disconnected</span>';
+            };
+
+            socket.onerror = (error) => {
+                log('❌ WebSocket error: ' + error);
+            };
+        }
+
+        function sendCode() {
+            const code = document.getElementById('code-editor').value;
+            log(`📝 Sending code: ${code.substring(0, 50)}...`);
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: 'code-update',
+                    code: code,
+                    room: 'DEBUG123'
+                }));
+            } else {
+                log('❌ Cannot send code - socket not connected');
+            }
+        }
+
+        // Auto-connect on page load
+        window.onload = () => {
+            log('🔧 WebRTC Debug Test Started');
+            connectToServer();
+        };
+
+        // Test functions
+        window.testWebRTC = {
+            startCamera,
+            stopCamera,
+            sendCode,
+            connectToServer: () => connectToServer()
+        };
+    </script>
+</body>
+</html>
